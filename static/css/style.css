@@ -1,0 +1,84 @@
+/* HireScope AI — Custom Styles (supplements Tailwind CDN) */
+
+/* Base transitions */
+*, *::before, *::after {
+    transition-property: color, background-color, border-color, box-shadow, transform, opacity;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 150ms;
+}
+
+/* Smooth scroll */
+html {
+    scroll-behavior: smooth;
+}
+
+/* Selection color */
+::selection {
+    background: rgba(99, 102, 241, 0.2);
+    color: #312e81;
+}
+
+/* Focus ring */
+*:focus-visible {
+    outline: 2px solid #6366f1;
+    outline-offset: 2px;
+    border-radius: 8px;
+}
+
+/* Form inputs - remove browser defaults */
+input[type="file"] {
+    cursor: pointer;
+}
+
+input[type="file"]::-webkit-file-upload-button {
+    cursor: pointer;
+}
+
+/* Table row hover transition */
+tbody tr {
+    transition: background-color 0.2s ease;
+}
+
+/* Modal animation */
+#candidate-modal:not(.hidden) #modal-content {
+    animation: modalSlideIn 0.3s ease-out;
+}
+
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: scale(0.95) translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+/* Loading spinner */
+.spinner {
+    border: 2px solid rgba(99, 102, 241, 0.2);
+    border-top: 2px solid #6366f1;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Print styles */
+@media print {
+    nav, footer, .btn-primary, .btn-secondary, button {
+        display: none !important;
+    }
+    body {
+        background: white !important;
+    }
+    .glass-card {
+        box-shadow: none !important;
+        border: 1px solid #e2e8f0 !important;
+    }
+}

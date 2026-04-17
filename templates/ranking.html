@@ -1,0 +1,294 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 mt-2 animate-fade-in-up">
+
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-end mb-8 gap-4">
+        <div>
+            <h1 class="text-3xl font-extrabold text-slate-800 flex items-center gap-3">
+                <div class="w-10 h-10 bg-gradient-to-br from-amber-400 to-orange-500 rounded-xl flex items-center justify-center shadow-md shadow-amber-200">
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path></svg>
+                </div>
+                Candidate Leaderboard
+            </h1>
+            <p class="text-slate-500 mt-1 text-sm ml-13">{{ candidate_count }} candidates processed — click any row to view full profile</p>
+        </div>
+        <div class="flex gap-3">
+            <a href="/" class="px-4 py-2.5 bg-white hover:bg-slate-50 text-slate-700 rounded-xl transition border border-slate-200 shadow-sm font-medium text-sm flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                Add Candidate
+            </a>
+            <a href="/clear" class="px-4 py-2.5 bg-red-50 hover:bg-red-100 text-red-600 rounded-xl transition border border-red-200 shadow-sm font-medium text-sm flex items-center gap-2" onclick="return confirm('⚠️ Are you sure? This will permanently delete ALL candidates from the database.')">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                Clear All
+            </a>
+        </div>
+    </div>
+
+    <!-- Re-Rank Panel -->
+    <div class="glass-card p-5 rounded-2xl mb-8 animate-fade-in-up-delay">
+        <form method="POST" action="/ranking" class="flex flex-col md:flex-row gap-4 items-end">
+            <div class="flex-grow w-full">
+                <label for="job_description" class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Re-Rank via Semantic Similarity</label>
+                <input type="text" name="job_description" id="job_description" 
+                    class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 text-slate-800 focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 transition text-sm placeholder-slate-400"
+                    placeholder="Enter keywords or a full job description to re-rank all candidates..." 
+                    value="{{ job_description }}">
+            </div>
+            <button type="submit" class="w-full md:w-auto whitespace-nowrap btn-primary text-white font-semibold py-3.5 px-6 rounded-xl shadow-md text-sm flex items-center justify-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                Recalculate
+            </button>
+        </form>
+    </div>
+
+    {% if not ranked %}
+        <!-- Empty State -->
+        <div class="glass-card p-16 text-center rounded-2xl">
+            <div class="w-20 h-20 bg-slate-100 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                <svg class="w-10 h-10 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+            </div>
+            <h3 class="text-xl font-bold text-slate-700 mb-2">No candidates yet</h3>
+            <p class="text-slate-400 mb-6">Upload resumes to start building your leaderboard</p>
+            <a href="/" class="btn-primary text-white px-6 py-3 rounded-xl shadow-md font-semibold text-sm inline-flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                Upload Resume
+            </a>
+        </div>
+    {% else %}
+        <!-- Leaderboard Table -->
+        <div class="glass-card rounded-2xl overflow-hidden animate-fade-in-up-delay">
+            <div class="overflow-x-auto">
+                <table class="min-w-full">
+                    <thead>
+                        <tr class="bg-gradient-to-r from-slate-50 to-slate-100 border-b border-slate-200">
+                            <th class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Rank</th>
+                            <th class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Candidate</th>
+                            <th class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Match Score</th>
+                            <th class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Skills</th>
+                            <th class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100">
+                        {% for candidate in ranked %}
+                        <tr class="hover:bg-brand-50/40 transition-colors group cursor-pointer" onclick="openCandidateModal('{{ candidate._id }}')">
+                            <!-- Rank -->
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                {% if loop.index == 1 %}
+                                    <span class="inline-flex items-center justify-center w-9 h-9 rounded-xl bg-gradient-to-br from-amber-300 to-amber-500 text-white font-bold text-sm shadow-md shadow-amber-200">🥇</span>
+                                {% elif loop.index == 2 %}
+                                    <span class="inline-flex items-center justify-center w-9 h-9 rounded-xl bg-gradient-to-br from-slate-300 to-slate-400 text-white font-bold text-sm shadow-md shadow-slate-200">🥈</span>
+                                {% elif loop.index == 3 %}
+                                    <span class="inline-flex items-center justify-center w-9 h-9 rounded-xl bg-gradient-to-br from-amber-600 to-amber-700 text-white font-bold text-sm shadow-md shadow-amber-200">🥉</span>
+                                {% else %}
+                                    <span class="inline-flex items-center justify-center w-9 h-9 rounded-xl bg-slate-100 text-slate-500 font-bold text-sm">{{ loop.index }}</span>
+                                {% endif %}
+                            </td>
+                            <!-- Candidate Name -->
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 bg-gradient-to-br from-brand-400 to-sky-400 rounded-xl flex items-center justify-center text-white font-bold text-sm shadow-sm flex-shrink-0">
+                                        {{ candidate.name[0]|upper }}
+                                    </div>
+                                    <div>
+                                        <div class="font-semibold text-slate-800 text-sm">{{ candidate.name }}</div>
+                                        <div class="text-xs text-slate-400">ID: {{ candidate._id[-8:] }}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <!-- Score -->
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="flex items-center gap-3">
+                                    <span class="text-lg font-extrabold {% if candidate.match_score >= 70 %}text-emerald-600{% elif candidate.match_score >= 40 %}text-amber-600{% else %}text-slate-500{% endif %}">
+                                        {{ candidate.match_score }}%
+                                    </span>
+                                    <div class="w-20 h-2 bg-slate-100 rounded-full overflow-hidden">
+                                        <div class="h-full rounded-full transition-all duration-500 {% if candidate.match_score >= 70 %}bg-gradient-to-r from-emerald-400 to-emerald-500{% elif candidate.match_score >= 40 %}bg-gradient-to-r from-amber-400 to-amber-500{% else %}bg-gradient-to-r from-slate-300 to-slate-400{% endif %}" style="width: {{ candidate.match_score }}%"></div>
+                                    </div>
+                                </div>
+                            </td>
+                            <!-- Skills -->
+                            <td class="px-6 py-4">
+                                <div class="flex flex-wrap gap-1.5 max-w-xs">
+                                    {% for skill in candidate.skills[:4] %}
+                                        <span class="px-2 py-0.5 bg-brand-50 text-brand-600 border border-brand-100 rounded-lg text-xs font-medium">{{ skill }}</span>
+                                    {% endfor %}
+                                    {% if candidate.skills|length > 4 %}
+                                        <span class="px-2 py-0.5 bg-slate-100 text-slate-500 rounded-lg text-xs font-medium">+{{ candidate.skills|length - 4 }} more</span>
+                                    {% endif %}
+                                </div>
+                            </td>
+                            <!-- Action -->
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <button onclick="event.stopPropagation(); openCandidateModal('{{ candidate._id }}')" class="text-brand-600 hover:text-brand-700 font-semibold text-xs flex items-center gap-1 group-hover:underline">
+                                    View Profile
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+<!-- Candidate Profile Modal -->
+<div id="candidate-modal" class="fixed inset-0 z-[100] hidden">
+    <div class="modal-backdrop absolute inset-0" onclick="closeModal()"></div>
+    <div class="relative flex items-center justify-center min-h-screen p-4">
+        <div id="modal-content" class="relative bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[85vh] overflow-y-auto p-0 animate-fade-in-up" style="animation-duration: 0.3s;">
+            <!-- Modal will be populated by JS -->
+            <div id="modal-body" class="p-8">
+                <div class="flex items-center justify-center py-12">
+                    <div class="w-8 h-8 border-2 border-brand-500 border-t-transparent rounded-full animate-spin"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function openCandidateModal(candidateId) {
+    const modal = document.getElementById('candidate-modal');
+    const body = document.getElementById('modal-body');
+    modal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+
+    // Show loading
+    body.innerHTML = `<div class="flex items-center justify-center py-16"><div class="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin"></div></div>`;
+
+    fetch(`/api/candidate/${candidateId}`)
+        .then(r => r.json())
+        .then(data => {
+            if (data.error) {
+                body.innerHTML = `<p class="text-red-500 text-center py-12">Candidate not found</p>`;
+                return;
+            }
+
+            const scoreColor = data.match_score >= 70 ? 'emerald' : data.match_score >= 40 ? 'amber' : 'slate';
+
+            let skillsHtml = data.skills.map(s => 
+                `<span class="px-2.5 py-1 bg-indigo-50 text-indigo-700 border border-indigo-100 rounded-lg text-xs font-medium">${s}</span>`
+            ).join('') || '<span class="text-slate-400 text-sm italic">None detected</span>';
+
+            let eduHtml = data.education.map(e => 
+                `<span class="px-2.5 py-1 bg-violet-50 text-violet-700 border border-violet-100 rounded-lg text-xs font-medium">${e}</span>`
+            ).join('') || '<span class="text-slate-400 text-sm italic">None detected</span>';
+
+            let expHtml = data.experience.map(e => 
+                `<span class="px-2.5 py-1 bg-teal-50 text-teal-700 border border-teal-100 rounded-lg text-xs font-medium">${e}</span>`
+            ).join('') || '<span class="text-slate-400 text-sm italic">None detected</span>';
+
+            let matchedHtml = (data.skill_gaps.matched || []).map(s => 
+                `<span class="px-2.5 py-1 bg-emerald-50 text-emerald-700 border border-emerald-100 rounded-lg text-xs font-medium">✓ ${s}</span>`
+            ).join('') || '<span class="text-slate-400 text-xs italic">No JD provided</span>';
+
+            let missingHtml = (data.skill_gaps.missing || []).map(s => 
+                `<span class="px-2.5 py-1 bg-red-50 text-red-600 border border-red-100 rounded-lg text-xs font-medium line-through">${s}</span>`
+            ).join('') || '<span class="text-slate-400 text-xs italic">No gaps</span>';
+
+            let audioHtml = '';
+            if (data.audio_transcription && data.audio_transcription.text) {
+                audioHtml = `
+                    <div class="mt-6 bg-gradient-to-r from-emerald-50 to-teal-50 p-4 rounded-xl border border-emerald-100">
+                        <h4 class="text-xs font-bold text-emerald-700 uppercase mb-2 flex items-center gap-1.5">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path></svg>
+                            Audio Transcription (${(data.audio_transcription.language || '').toUpperCase()})
+                        </h4>
+                        <p class="text-slate-700 text-sm italic leading-relaxed">"${data.audio_transcription.text}"</p>
+                    </div>`;
+            }
+
+            let resumeLinkHtml = '';
+
+            body.innerHTML = `
+                <!-- Header -->
+                <div class="flex items-center justify-between mb-6">
+                    <div class="flex items-center gap-4">
+                        <div class="w-14 h-14 bg-gradient-to-br from-indigo-500 to-sky-500 rounded-2xl flex items-center justify-center text-white text-xl font-bold shadow-lg shadow-indigo-200">
+                            ${data.name[0].toUpperCase()}
+                        </div>
+                        <div>
+                            <h2 class="text-xl font-bold text-slate-800">${data.name}</h2>
+                            <p class="text-xs text-slate-400">ID: ${data._id} • ${data.skills.length} skills</p>
+                            ${resumeLinkHtml}
+                        </div>
+                    </div>
+                    <button onclick="closeModal()" class="w-8 h-8 bg-slate-100 hover:bg-slate-200 rounded-lg flex items-center justify-center transition">
+                        <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </div>
+
+                ${data.ai_summary ? `
+                <!-- Google Gen AI Summary -->
+                <div class="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-xl border border-blue-100 mb-6">
+                    <div class="text-xs text-blue-600 uppercase font-bold mb-2 flex items-center gap-1.5">
+                        <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                        AI Profile Summary
+                    </div>
+                    <p class="text-slate-700 text-sm italic leading-relaxed">${data.ai_summary}</p>
+                </div>
+                ` : ''}
+
+                <!-- Score -->
+                <div class="flex items-center gap-4 mb-6 p-4 bg-gradient-to-r from-${scoreColor}-50 to-transparent rounded-xl border border-${scoreColor}-100">
+                    <div class="text-3xl font-extrabold text-${scoreColor}-600">${data.match_score}%</div>
+                    <div>
+                        <p class="text-sm font-medium text-slate-700">Semantic Match Score</p>
+                        <div class="w-32 h-2 bg-slate-100 rounded-full overflow-hidden mt-1">
+                            <div class="h-full rounded-full bg-${scoreColor}-500" style="width: ${data.match_score}%"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Skills -->
+                <div class="mb-5">
+                    <h4 class="text-xs font-bold text-slate-500 uppercase mb-2">All Skills (${data.skills.length})</h4>
+                    <div class="flex flex-wrap gap-1.5">${skillsHtml}</div>
+                </div>
+
+                <!-- Education & Experience -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
+                    <div>
+                        <h4 class="text-xs font-bold text-violet-600 uppercase mb-2">Education</h4>
+                        <div class="flex flex-wrap gap-1.5">${eduHtml}</div>
+                    </div>
+                    <div>
+                        <h4 class="text-xs font-bold text-teal-600 uppercase mb-2">Experience</h4>
+                        <div class="flex flex-wrap gap-1.5">${expHtml}</div>
+                    </div>
+                </div>
+
+                <!-- Skill Gap -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <h4 class="text-xs font-bold text-emerald-600 uppercase mb-2">✓ Matched Skills</h4>
+                        <div class="flex flex-wrap gap-1.5">${matchedHtml}</div>
+                    </div>
+                    <div>
+                        <h4 class="text-xs font-bold text-red-600 uppercase mb-2">✗ Missing Skills</h4>
+                        <div class="flex flex-wrap gap-1.5">${missingHtml}</div>
+                    </div>
+                </div>
+
+                ${audioHtml}
+            `;
+        })
+        .catch(err => {
+            body.innerHTML = `<p class="text-red-500 text-center py-12">Error loading candidate data</p>`;
+        });
+}
+
+function closeModal() {
+    document.getElementById('candidate-modal').classList.add('hidden');
+    document.body.style.overflow = '';
+}
+
+// Close modal on ESC key
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeModal();
+});
+</script>
+{% endblock %}
