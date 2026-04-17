@@ -2,7 +2,7 @@
 title: HireScope AI
 emoji: 🔍
 colorFrom: indigo
-colorTo: cyan
+colorTo: blue
 sdk: docker
 app_file: app.py
 python_version: "3.9"
