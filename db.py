@@ -30,6 +30,7 @@ db = client.get_database("resume_screener")
 users_collection = db.get_collection("users")
 jobs_collection = db.get_collection("jobs")
 candidates_collection = db.get_collection("candidates")
+trash_candidates_collection = db.get_collection("trash_candidates")
 
 # ── User Operations ──
 
@@ -146,4 +147,11 @@ def clear_all_candidates(user_id=None):
     query = {}
     if user_id:
         query["uploaded_by"] = user_id
+        
+    candidates_to_trash = list(candidates_collection.find(query))
+    if candidates_to_trash:
+        for c in candidates_to_trash:
+            c["deleted_at"] = datetime.utcnow()
+        trash_candidates_collection.insert_many(candidates_to_trash)
+        
     candidates_collection.delete_many(query)

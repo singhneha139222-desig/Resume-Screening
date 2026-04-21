@@ -477,7 +477,7 @@ def ranking():
 def clear():
     clear_all_candidates(session.get("user_id"))
     session.pop("last_candidate_id", None)
-    flash("All candidate data cleared from database.", "info")
+    flash("All candidate data cleared successfully.", "info")
     return redirect(url_for("index"))
 
 if __name__ == "__main__":
