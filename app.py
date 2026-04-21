@@ -135,7 +135,7 @@ def logout():
 @app.route("/")
 @login_required
 def index():
-    candidates = get_all_candidates()
+    candidates = get_all_candidates(session.get("user_id"))
     # Calculate stats
     avg_score = 0
     if candidates:
@@ -374,7 +374,7 @@ def results():
     elif not candidate:
         session.pop("awaiting_transcription_for", None)
 
-    candidates = get_all_candidates()
+    candidates = get_all_candidates(session.get("user_id"))
     return render_template(
         "results.html",
         candidate=candidate,
@@ -429,7 +429,7 @@ def candidate_profile(candidate_id):
 @app.route("/ranking", methods=["GET", "POST"])
 @login_required
 def ranking():
-    candidates = get_all_candidates()
+    candidates = get_all_candidates(session.get("user_id"))
     job_description = ""
     ranked = list(candidates)
 
@@ -466,7 +466,7 @@ def ranking():
                     logger.error(f"Error updating candidate {candidate_id} during re-ranking: {e}")
 
             # Re-fetch the updated candidates from the database
-            candidates = get_all_candidates()
+            candidates = get_all_candidates(session.get("user_id"))
             # Rank the newly fetched candidates
             ranked = rank_candidates(candidates, job_description, jd_skills)
 
@@ -475,7 +475,7 @@ def ranking():
 @app.route("/clear")
 @login_required
 def clear():
-    clear_all_candidates()
+    clear_all_candidates(session.get("user_id"))
     session.pop("last_candidate_id", None)
     flash("All candidate data cleared from database.", "info")
     return redirect(url_for("index"))

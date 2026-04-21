@@ -67,8 +67,11 @@ def insert_candidate(candidate_data):
     result = candidates_collection.insert_one(candidate_data)
     return str(result.inserted_id)
 
-def get_all_candidates():
-    candidates = list(candidates_collection.find().sort("match_score", -1))
+def get_all_candidates(user_id=None):
+    query = {}
+    if user_id:
+        query["uploaded_by"] = user_id
+    candidates = list(candidates_collection.find(query).sort("match_score", -1))
     for c in candidates:
         c['_id'] = str(c['_id'])
     return candidates
@@ -139,5 +142,8 @@ def update_candidate_audio_error(candidate_id, error_msg, audio_url=None):
         },
     )
 
-def clear_all_candidates():
-    candidates_collection.delete_many({})
+def clear_all_candidates(user_id=None):
+    query = {}
+    if user_id:
+        query["uploaded_by"] = user_id
+    candidates_collection.delete_many(query)
